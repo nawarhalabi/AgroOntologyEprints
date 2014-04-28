@@ -34,7 +34,6 @@ $c->add_dataset_field(
 		],
 		multiple => 1,
 		render_value => 'render_ontology_multiple_output',
-		render_single_value => 'render_ontology_output',
 		render_input => 'render_ontology_input',
 	}
 
@@ -42,57 +41,46 @@ $c->add_dataset_field(
 
 $c->{render_ontology_multiple_output} = sub
 {
-	my ($repo, $field, $value) = @_;
+	my ($session, $field, $value) = @_;
 
-	require HTTP::Request;
-	require LWP::UserAgent;
-	my $ua = LWP::UserAgent->new;
-
-	my $uri = $repo->config('agro_ontology_broker_uri');
-	my $request = HTTP::Request->new( "GET", $uri);
-	$request->header( 'Accept-Language' => 'de' );
+	require HTTP::Request;         #for http requests
+	require LWP::UserAgent;        #//
+	my $ua = LWP::UserAgent->new;  #//
 	
-	my $response = $ua->request( $request );
-
-	my( $session, $field, $value, $object, $test ) = @_;
+	use XML::Parser;
+	
+	my $uri = $session->config('agro_ontology_broker_uri');
+	my $parser = new XML::Parser(Style => 'Tree');
 
 	my $parentElem = $session->make_element( "div", class=>"agricultural-terms" );	
-	$parentElem->appendChild( $session->make_text( $response->content ) );
+
 	my $count = 0;
         for($count = 0; $count < scalar(@{$value}); $count++)
         {
-		my $term = $session->make_element( "p", class=>"agricultural-term" );
-		$term->appendChild( $session->make_text(@{$value}[$count]->{"text_value"}) );
-		$parentElem->appendChild( $term );
+		my @temp = split( /\|\|/, @{$value}[$count]->{"authority"} ); #Temp stores the authority string after splitting the thesaurus from the URI
+		my $termUri = '';
+		
+                my $term = $session->make_element( "p", class=>"agricultural-term" );
+	
+		if(@temp[0] =~ /[\/\\:]([^\/\\:]*)$/)
+		{
+			$termUri = "$1";
+
+			my $request = HTTP::Request->new( "GET", $uri.@temp[1]."/concept?uri=".$termUri);
+		        $request->header( 'Accept-Language' => $session->get_langid() );
+			my $response = $ua->request( $request );
+			
+			my @parsed = undef;
+			eval { @parsed = $parser->parse($response->content); }; warn $@ if $@;
+			
+			if(defined @parsed and defined @parsed[0] and defined @{@parsed[0]}[1] and defined @{@{@parsed[0]}[1]}[4] and defined @{@{@{@parsed[0]}[1]}[4]}[4] and defined @{@{@{@{@parsed[0]}[1]}[4]}[4]}[2])
+			{
+				$term->appendChild( $session->make_text( @{@{@{@{@parsed[0]}[1]}[4]}[4]}[2] ) );
+				$parentElem->appendChild( $term );
+			}
+		}
 	}
 	return $parentElem;
-};
-
-$c->{render_ontology_output} = sub
-{
-        my( $session, $field, $value, $object ) = @_;
-
-#	my $parentElem = $session->make_element( "div" );
-
-#	my @subjects = split(/\|\|/, $value);
-#	for(my $count = 0; $count < scalar(@subjects); $count++)
-#	{
-		#Here, the language specific label lookup can be/is carried out
-#	        my $domElem = $session->make_element( "p" );
-#	        $domElem->appendChild( $session->make_text( $subjects[$count] ) );
-#		$parentElem->appendChild( $domElem );
-#		
-#	}
-
-	#Here, the language specific label lookup can be/is carried out
-	
-#	my $domElem = $session->make_element( "p" );
-#	$domElem->appendChild( $session->make_text( $value ) ); 
-
-#	return $parentElem;
-#	return $domElem;
-	return $session->make_element( "input", type=>"hidden",class=>"basename", value=>$value, name=>$value."_hidden" );
-	return $session->make_text( "test" ); # $value );
 };
 
 $c->{render_ontology_input} = sub
@@ -207,5 +195,7 @@ $c->{render_ontology_input} = sub
 	my $input3 = $session->make_element( "input", name=>"_internal_".$basename, value=>"Lookup Terms", type=>"button", class=>"ep_form_action_button show-overlay", onclick=>"show_overlay();"  );
 	$td3->appendChild( $input3 );
 
+	$domElem->appendChild( $session->make_element( "script", type=>"text/javascript", src=>"/javascript/ontology_overlay.js") );
+		
 	return $domElem;
 };

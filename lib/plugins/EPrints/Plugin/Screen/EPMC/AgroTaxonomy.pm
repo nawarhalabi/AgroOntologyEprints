@@ -26,7 +26,12 @@ sub action_enable
 
 	my $repo = $self->{repository};
 
-	EPrints::XML::add_to_xml( $self->_workflow_file, $self->_xml, $self->{package_name} );
+	my $db = EPrints::Database->new( $repo );
+	$ok = $db->connect;
+	$db->create_table( "eprint_agro_cache", ["uri", "thesaurus", "language"], ["uri VARCHAR(50)", "thesaurus VARCHAR(50)", "language VARCHAR(10)", "text_value VARCHAR(50)", "valid_until DATETIME"] );
+	$db->disconnect;
+
+	EPrints::XML::add_to_xml( $self->_workflow_file, $self->_xml, $self->{package_name} );	
 
 	$self->reload_config if !$skip_reload;
 }
@@ -37,6 +42,11 @@ sub action_disable
 
 	$self->SUPER::action_disable( $skip_reload );
 	my $repo = $self->{repository};
+
+	my $db = EPrints::Database->new( $repo );
+	$ok = $db->connect;
+	$db->drop_table( "eprint_agro_cache" );
+	$db->disconnect;
 
 	EPrints::XML::remove_package_from_xml( $self->_workflow_file, $self->{package_name} );
 
