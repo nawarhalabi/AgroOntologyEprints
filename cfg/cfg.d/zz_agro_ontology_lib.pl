@@ -43,41 +43,59 @@ $c->{render_ontology_multiple_output} = sub
 {
 	my ($session, $field, $value) = @_;
 
-	require HTTP::Request;         #for http requests
-	require LWP::UserAgent;        #//
-	my $ua = LWP::UserAgent->new;  #//
+	require HTTP::Request;         # for http requests
+	require LWP::UserAgent;        # 
+	my $ua = LWP::UserAgent->new;  # 
+
+	require EPrints::XML::DOM;
 	
 	use XML::Parser;
+#	use XML::DOM::XPath; # Should be used in future versions to make the package more robust
 	
-	my $uri = $session->config('agro_ontology_broker_uri');
-	my $parser = new XML::Parser(Style => 'Tree');
+	my $uri = $session->config( "agro_ontology_broker_uri" ); # Get the broker URI
 
-	my $parentElem = $session->make_element( "div", class=>"agricultural-terms" );	
+	my $parentElem = $session->make_element( "div", class=>"agricultural-terms" ); # Root element to be returned to the EPrints for rendering
 
 	my $count = 0;
-        for($count = 0; $count < scalar(@{$value}); $count++)
+        for( $count = 0; $count < scalar(@{$value}); $count++ )
         {
-		my @temp = split( /\|\|/, @{$value}[$count]->{"authority"} ); #Temp stores the authority string after splitting the thesaurus from the URI
+		my @temp = split( /\|\|/, @{$value}[$count]->{"authority"} ); # Temp stores the authority string after splitting the thesaurus from the URI
 		my $termUri = '';
 		
                 my $term = $session->make_element( "p", class=>"agricultural-term" );
 	
-		if(@temp[0] =~ /[\/\\:]([^\/\\:]*)$/)
+		if(@temp[0] =~ /[\/\\:]([^\/\\:]*)$/) # extract the last bit of the uri as the ontology plugin requires it for searching for the term in a specific language
 		{
 			$termUri = "$1";
 
-			my $request = HTTP::Request->new( "GET", $uri.@temp[1]."/concept?uri=".$termUri);
-		        $request->header( 'Accept-Language' => $session->get_langid() );
-			my $response = $ua->request( $request );
+			my $request = HTTP::Request->new( "GET", $uri.@temp[1]."/concept?uri=".$termUri ); #
+		        $request->header( 'Accept-Language' => $session->get_langid() );		   # HTTP request to the broker
+			my $response = $ua->request( $request );					   #
 			
-			my @parsed = undef;
-			eval { @parsed = $parser->parse($response->content); }; warn $@ if $@;
-			
-			if(defined @parsed and defined @parsed[0] and defined @{@parsed[0]}[1] and defined @{@{@parsed[0]}[1]}[4] and defined @{@{@{@parsed[0]}[1]}[4]}[4] and defined @{@{@{@{@parsed[0]}[1]}[4]}[4]}[2])
+			my $domTemp = undef;								   #
+			my $parser1 = new XML::DOM::Parser;						   # Parse XML response
+			eval { $domTemp = $parser1->parse( $response->content ); }; warn $@ if $@;	   #
+
+			my $done = 0; #indicates weather a value has been found in hte xml response from the broker
+			if(defined $domTemp) # If parsing is successful, look for the term text
 			{
-				$term->appendChild( $session->make_text( @{@{@{@{@parsed[0]}[1]}[4]}[4]}[2] ) );
-				$parentElem->appendChild( $term );
+				my @tempElemList = $domTemp->getElementsByTagName( "skos:prefLabel" );	#
+				my $tempElem = @tempElemList[0] if @tempElemList;			#
+				if( defined $tempElem )							# IMPORTANT: We have not used XPath here even though it is more appropriate because the XPath library
+				{									# in EPrints has problems dealing with XML namespaces. XPath would make this package more robust
+					foreach( $tempElem->getChildNodes )				#
+					{								#
+                                		$term->appendChild( $session->make_text( $_->getNodeValue ) );
+					}
+					$done = 1;
+				}
 			}
+			if( not defined $domTemp or not $done ) # Display error in case it occures showing the XML response from the broker and the error message from parser
+			{
+				$term->appendChild( $session->make_text( "Could not parse xml from the broker. Please check the broker or the connection with the broker. ".$@."\nresponse-xml from broker:".$response->content ) );
+			}
+
+			$parentElem->appendChild( $term );
 		}
 	}
 	return $parentElem;
