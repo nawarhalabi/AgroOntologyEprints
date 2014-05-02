@@ -9,5 +9,6 @@
     <epp:phrase id="eprint_fieldname_subjects_authority">Authority</epp:phrase>
     <epp:phrase id="eprint_fieldname_subjects_text_value">Term</epp:phrase>
     <epp:phrase id="metapage_title_agro_taxonomy">Agricultural Subjects</epp:phrase>
+    <epp:phrase id="open_ontology_overlay">Lookup Terms</epp:phrase>
 
 </epp:phrases>

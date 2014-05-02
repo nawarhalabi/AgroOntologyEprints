@@ -49,7 +49,6 @@ $c->{render_ontology_multiple_output} = sub
 
 	require EPrints::XML::DOM;
 	
-	use XML::Parser;
 #	use XML::DOM::XPath; # Should be used in future versions to make the package more robust
 	
 	my $uri = $session->config( "agro_ontology_broker_uri" ); # Get the broker URI
@@ -105,101 +104,54 @@ $c->{render_ontology_input} = sub
 {
 	my( $field, $session, $current_value, $dataset, $staff, $hidden_fields, $object, $basename ) = @_;
 	
-	my $domElem = $session->make_element( "table", border=>"0", cellpadding=>"0", cellspacing=>"0", class=>"ep_form_input_grid" );
-	my $tbody = $session->make_element( "tbody" );
+	my $domElem = $session->make_element( "table", border=>"0", cellpadding=>"0", cellspacing=>"0", class=>"ep_form_input_grid" );  # Field container
+	my $tbody = $session->make_element( "tbody" );											#
 	
-	my $basenameInputHidden = $session->make_element( "input", type=>"hidden",class=>"basename", value=>$basename, name=>$basename."_hidden" );
+	my $basenameInputHidden = $session->make_element( "input", type=>"hidden",class=>"basename", value=>$basename, name=>$basename."_hidden" ); # Used in JavaScript to determine the name of the field
 
 	$domElem->appendChild( $basenameInputHidden );
-
 	$domElem->appendChild( $tbody );
-	
 
-	my $trHeader = $session->make_element( "tr" );
+	my $trHeader = $session->make_element( "tr" ); # Header row
 	$tbody->appendChild( $trHeader );
-	my $emptyTh = $session->make_element( "th", class=>"empty_heading", id=>$basename."_th_0" );
+
+	my $emptyTh = $session->make_element( "th", class=>"empty_heading", id=>$basename."_th_0" ); # Headers
 	$trHeader->appendChild( $emptyTh );
 
         my $th1 = $session->make_element( "th", id=>$basename."_th_1" );
-	$th1->appendChild( $session->make_text( "Authority" ) );
+	$th1->appendChild( $session->make_text( $session->phrase( "eprint_fieldname_agro_subjects_authority" ) ) );
 	$trHeader->appendChild( $th1 );
 
         my $th2 = $session->make_element( "th", id=>$basename."_th_2" );
-	$th2->appendChild( $session->make_text( "Term" ) );
+	$th2->appendChild( $session->make_text( $session->phrase( "eprint_fieldname_agro_subjects_text_value" ) ) );
         $trHeader->appendChild( $th2 );
 
 	$tbody->appendChild( $trHeader );
 
 	my $count = 0;	
-	for($count = 0; $count < scalar(@{$current_value}); $count++)
+	for($count = 0; $count < scalar(@{$current_value}); $count++) # Foreach value in the field, render a new entry. We use citation files
 	{
 		my $tr1 = $session->make_element( "tr" );
 		$tbody->appendChild( $tr1 );
 		
-		my $numTd = $session->make_element( "td", valign=>"top", id=>$basename."_cell_0_".$count, class=>"ep_form_input_grid_pos" );
-		$tr1->appendChild( $numTd );
-
-		$numTd->appendChild( $session->make_text( ($count + 1).". " ) );	
-	
-		my $td1 = $session->make_element( "td", valign=>"top", id=>$basename."_cell_1_".$count );
-		$tr1->appendChild( $td1 );
-		
-		my $input1 = $session->make_element( "input", value=>@{$current_value}[$count]->{"authority"}, onkeypress=>"return EPJS_block_enter( event )", name=>$basename."_".($count + 1)."_authority", id=>$basename."_".($count + 1)."_authority", type=>"text", class=>"ep_form_text ep_eprints_ontology", size=>"25", readonly=>"true" );
-	
-		my $td2 = $session->make_element( "td", valign=>"top", id=>$basename."_cell_2_".$count );
-		$tr1->appendChild( $td2 );
-
-		my $input2 = $session->make_element( "input", value=>@{$current_value}[$count]->{"text_value"}, onkeypress=>"return EPJS_block_enter( event )", name=>$basename."_".($count + 1)."_text_value", id=>$basename."_".($count + 1)."_text_value", type=>"text", class=>"ep_form_text ep_eprints_ontology", size=>"25", readonly=>"true" );
-
-
-		my $delTd = $session->make_element( "td", valign=>"top", id=>$basename."_cell_3_".$count );
-		$tr1->appendChild( $delTd );
-		
-		my $delInput = $session->make_element( "a", name=>$basename."_del_".($count + 1), id=>$basename."_del_".($count + 1), type=>"image", href=>"javascript:", title=>"Remove Item",src=>"/style/images/minus.png", class=>"epjs_ajax", onclick=>"removeTerm(".($count + 1).")" ); 
-		my $delImg = $session->make_element( "img", src=>"/style/images/delete.png" );
-		
-		$delTd->appendChild( $delInput );
-		$delInput->appendChild( $delImg );
-
-		$td1->appendChild( $input1 );
-		$td2->appendChild( $input2 );
+		$tr1->appendChild( $object->render_citation( "agro_field_entry", ( text_value=> [@{$current_value}[$count]->{"text_value"} , "STRING"],
+										   authority=> [@{$current_value}[$count]->{"authority"}, "STRING"],
+										   row=> [ $count, "STRING" ],
+										   basename=> [ $basename, "STRING" ] ), undef ) );
 	}
         
         if($count == 0)
         {
 		my $tr1 = $session->make_element( "tr" );
                 $tbody->appendChild( $tr1 );
-
-                my $numTd = $session->make_element( "td", valign=>"top", id=>$basename."_cell_0_".$count, class=>"ep_form_input_grid_pos" );
-                $tr1->appendChild( $numTd );
-
-                $numTd->appendChild( $session->make_text( ($count + 1).". " ) );
-
-                my $td1 = $session->make_element( "td", valign=>"top", id=>$basename."_cell_1_".$count );
-                $tr1->appendChild( $td1 );
-
-                my $input1 = $session->make_element( "input", onkeypress=>"return EPJS_block_enter( event )", name=>$basename."_".($count + 1)."_authority", id=>$basename."_".($count + 1)."_authority", type=>"text", class=>"ep_form_text ep_eprints_ontology", size=>"25" );
-
-                my $td2 = $session->make_element( "td", valign=>"top", id=>$basename."_cell_2_".$count );
-                $tr1->appendChild( $td2 );
-
-                my $input2 = $session->make_element( "input", onkeypress=>"return EPJS_block_enter( event )", name=>$basename."_".($count + 1)."_text_value", id=>$basename."_".($count + 1)."_text_value", type=>"text", class=>"ep_form_text ep_eprints_ontology", size=>"25" );
-
-
-                my $delTd = $session->make_element( "td", valign=>"top", id=>$basename."_cell_3_".$count );
-                $tr1->appendChild( $delTd );
-
-                my $delInput = $session->make_element( "a", name=>$basename."_del_".($count + 1), id=>$basename."_del_".($count + 1), type=>"image", href=>"javascript:", title=>"Remove Item",src=>"/style/images/minus.png", class=>"epjs_ajax", onclick=>"removeTerm(".($count + 1).")" );
-                my $delImg = $session->make_element( "img", src=>"/style/images/delete.png" );
-
-                $delTd->appendChild( $delInput );
-                $delInput->appendChild( $delImg );
-
-                $td1->appendChild( $input1 );
-                $td2->appendChild( $input2 );
+		
+		$tr1->appendChild( $object->render_citation( "agro_field_entry", ( text_value=> [ '' , "STRING"],
+                                                                                   authority=> [ '', "STRING"],
+                                                                                   row=> [ 0, "STRING" ],
+                                                                                   basename=> [ $basename, "STRING" ] ), undef ) );
         }
 
-	my $spaces = $session->make_element( "input", value=>$count, type=>"hidden", name=>$basename."_spaces" );
+	my $spaces = $session->make_element( "input", value=>$count, type=>"hidden", name=>$basename."_spaces" ); # A filed that holds the number of spaces (values) to be stored in this multiple field
 	$tbody->appendChild( $spaces );
 
 	my $tr2 = $session->make_element( "tr" );
@@ -210,8 +162,8 @@ $c->{render_ontology_input} = sub
 	$tr2->appendChild( $tdOffset );
 	$tr2->appendChild( $td3 );
 
-	my $input3 = $session->make_element( "input", name=>"_internal_".$basename, value=>"Lookup Terms", type=>"button", class=>"ep_form_action_button show-overlay", onclick=>"show_overlay();"  );
-	$td3->appendChild( $input3 );
+	my $input = $session->make_element( "input", name=>"_internal_".$basename, value=>$session->phrase( "open_ontology_overlay" ), type=>"button", class=>"ep_form_action_button show-overlay", onclick=>"show_overlay();"  ); # This button creates an iframe that displays the broker's interface
+	$td3->appendChild( $input );
 
 	$domElem->appendChild( $session->make_element( "script", type=>"text/javascript", src=>"/javascript/ontology_overlay.js") );
 		

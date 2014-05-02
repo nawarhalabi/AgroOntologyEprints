@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+
+<!-- 
+	Agro Ontology Field Entry
+-->
+
+<cite:citation xmlns="http://www.w3.org/1999/xhtml" xmlns:epc="http://eprints.org/ep3/control" xmlns:cite="http://eprints.org/ep3/citation" >
+
+<tr>
+	<td valign="top" id="{$basename}_cell_0_{$row}" class="ep_form_input_grid_pos"><epc:print expr="$row + 1" />. </td>
+	<td valign="top" id="{$basename}_cell_1_{$row}">
+		<input value="{$authority}" onkeypress="return EPJS_block_enter( event )" name="{$basename}_{$row + 1}_authority" id="{$basename}_{$row + 1}_authority" type="text" class="ep_form_text ep_eprints_ontology" size="25" readonly="true"></input>
+	</td>
+	<td valign="top" id="{$basename}_cell_2_{$row}">
+		<input value="{$text_value}" onkeypress="return EPJS_block_enter( event )" name="{$basename}_{$row + 1}_text_value" id="{$basename}_{$row + 1}_text_value" type="text" class="ep_form_text ep_eprints_ontology" size="25" readonly="true"></input>
+	</td>
+	<td valign="top" id="{$basename}_cell_3_{$row}">
+		<a name="{$basename}_del_{$row + 1}" id="{$basename}_del_{$row + 1}" type="image" href="javascript:" title="Remove Item" src="/style/images/minus.png" class="epjs_ajax" onclick="removeTerm({$row + 1})">
+			<img src="/style/images/delete.png" />
+		</a>
+	</td>
+</tr>
+
+</cite:citation>
