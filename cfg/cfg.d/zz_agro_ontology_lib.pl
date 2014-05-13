@@ -39,6 +39,46 @@ $c->add_dataset_field(
 
 );
 
+sub checkAgroCache { # Find and return the cached agro term if it exists
+		
+	my ($session, $uri, $thesaurus, $language) = @_;
+
+	my $res = undef; # Stores the query result after disconnect
+
+	if(defined $uri and defined $thesaurus and defined $language)
+	{
+		my $db = $session->database;
+		my $cmd = $db->prepare_select( "SELECT * FROM eprint_agro_cache WHERE uri='".$uri."' and thesaurus='".$thesaurus."' and language='".$language."'" );
+		$cmd->execute;
+		my $array_ref = $cmd->fetchrow_arrayref;
+		if(defined $array_ref)
+		{
+			my $date_created = $array_ref->[4];
+
+		        my $cacheValidity = $session->config( "agro_cache_validity" );
+
+			if($date_created + $cacheValidity > time())
+			{
+				$res = $array_ref->[3];
+			}
+		}
+	}	
+
+	return $res;
+}
+
+sub saveToAgroCache { # Store a new agro term in the cache
+
+	my ($session, $uri, $thesaurus, $language, $text_value) = @_;
+
+        if(defined $uri and defined $thesaurus and defined $language and defined $text_value)
+        {
+                my $db = $session->database;
+		$db->delete_from( "eprint_agro_cache", ["uri", "thesaurus", "language", "text_value"], [$uri, $thesaurus, $language, $text_value] );
+		$db->insert( "eprint_agro_cache", ["uri", "thesaurus", "language", "text_value", "date_created"], [$uri, $thesaurus, $language, $text_value, time()] );
+        }
+}
+
 $c->{render_ontology_multiple_output} = sub
 {
 	my ($session, $field, $value) = @_;
@@ -46,7 +86,7 @@ $c->{render_ontology_multiple_output} = sub
 	require HTTP::Request;         # for http requests
 	require LWP::UserAgent;        # 
 	my $ua = LWP::UserAgent->new;  # 
-
+	
 	require EPrints::XML::DOM;
 	
 #	use XML::DOM::XPath; # Should be used in future versions to make the package more robust
@@ -56,7 +96,7 @@ $c->{render_ontology_multiple_output} = sub
 	my $parentElem = $session->make_element( "div", class=>"agricultural-terms" ); # Root element to be returned to the EPrints for rendering
 
 	my $count = 0;
-        for( $count = 0; $count < scalar(@{$value}); $count++ )
+        for($count = 0; $count < scalar(@{$value}); $count++)
         {
 		my @temp = split( /\|\|/, @{$value}[$count]->{"authority"} ); # Temp stores the authority string after splitting the thesaurus from the URI
 		my $termUri = '';
@@ -67,33 +107,45 @@ $c->{render_ontology_multiple_output} = sub
 		{
 			$termUri = "$1";
 
-			my $request = HTTP::Request->new( "GET", $uri.@temp[1]."/concept?uri=".$termUri ); #
-		        $request->header( 'Accept-Language' => $session->get_langid() );		   # HTTP request to the broker
-			my $response = $ua->request( $request );					   #
+			my $cachedTerm = checkAgroCache( $session, $termUri, @temp[1], $session->get_langid() );
 			
-			my $domTemp = undef;								   #
-			my $parser1 = new XML::DOM::Parser;						   # Parse XML response
-			eval { $domTemp = $parser1->parse( $response->content ); }; warn $@ if $@;	   #
-
-			my $done = 0; #indicates weather a value has been found in hte xml response from the broker
-			if(defined $domTemp) # If parsing is successful, look for the term text
+			if(defined $cachedTerm) # If conecept is in cache
 			{
-				my @tempElemList = $domTemp->getElementsByTagName( "skos:prefLabel" );	#
-				my $tempElem = @tempElemList[0] if @tempElemList;			#
-				if( defined $tempElem )							# IMPORTANT: We have not used XPath here even though it is more appropriate because the XPath library
-				{									# in EPrints has problems dealing with XML namespaces. XPath would make this package more robust
-					foreach( $tempElem->getChildNodes )				#
-					{								#
-                                		$term->appendChild( $session->make_text( $_->getNodeValue ) );
+				$term->appendChild( $session->make_text( $cachedTerm ) );
+			}
+			else
+			{
+				my $request = HTTP::Request->new( "GET", $uri.@temp[1]."/concept?uri=".$termUri ); #
+		        	$request->header( 'Accept-Language' => $session->get_langid() );		   # HTTP request to the broker
+				my $response = $ua->request( $request );					   #
+			
+				my $domTemp = undef;								   #
+				my $parser1 = new XML::DOM::Parser;						   # Parse XML response
+				eval { $domTemp = $parser1->parse( $response->content ); }; warn $@ if $@;	   #
+
+				my $termFromXML = ""; # The term text value as retreived from the broker
+
+				my $done = 0; #indicates weather a value has been found in hte xml response from the broker
+				if(defined $domTemp) # If parsing is successful, look for the term text
+				{
+					my @tempElemList = $domTemp->getElementsByTagName( "skos:prefLabel" );	#
+					my $tempElem = @tempElemList[0] if @tempElemList;			#
+					if( defined $tempElem )							# IMPORTANT: We have not used XPath here even though it is more appropriate because the XPath library
+					{									# in EPrints has problems dealing with XML namespaces. XPath would make this package more robust
+						foreach( $tempElem->getChildNodes )				#
+						{								#
+                                			$term->appendChild( $session->make_text( $_->getNodeValue ) );
+							$termFromXML .= $_->getNodeValue;
+						}
+						$done = 1;
 					}
-					$done = 1;
 				}
+				if(not defined $domTemp or not $done) # Display error in case it occures showing the XML response from the broker and the error message from parser
+				{
+					$term->appendChild( $session->make_text( "Could not parse xml from the broker. Please check the broker or the connection with the broker. ".$@."\nresponse-xml from broker:".$response->content ) );
+				}
+				saveToAgroCache( $session, $termUri, @temp[1], $session->get_langid(), $termFromXML );
 			}
-			if( not defined $domTemp or not $done ) # Display error in case it occures showing the XML response from the broker and the error message from parser
-			{
-				$term->appendChild( $session->make_text( "Could not parse xml from the broker. Please check the broker or the connection with the broker. ".$@."\nresponse-xml from broker:".$response->content ) );
-			}
-
 			$parentElem->appendChild( $term );
 		}
 	}

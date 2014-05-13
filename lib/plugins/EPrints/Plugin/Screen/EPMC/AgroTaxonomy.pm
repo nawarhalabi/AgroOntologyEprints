@@ -28,7 +28,7 @@ sub action_enable
 
 	my $db = EPrints::Database->new( $repo );
 	$ok = $db->connect;
-	$db->create_table( "eprint_agro_cache", ["uri", "thesaurus", "language"], ["uri VARCHAR(50)", "thesaurus VARCHAR(50)", "language VARCHAR(10)", "text_value VARCHAR(50)", "valid_until DATETIME"] );
+	$db->create_table( "eprint_agro_cache", ["uri", "thesaurus", "language"], ["uri VARCHAR(50)", "thesaurus VARCHAR(50)", "language VARCHAR(10)", "text_value VARCHAR(50)", "date_created BIGINT(20)"] );
 	$db->disconnect;
 
 	EPrints::XML::add_to_xml( $self->_workflow_file, $self->_xml, $self->{package_name} );	
