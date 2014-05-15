@@ -43,26 +43,30 @@ sub checkAgroCache { # Find and return the cached agro term if it exists
 		
 	my ($session, $uri, $thesaurus, $language) = @_;
 
+	#test that parameters have values
+	return undef if (
+		!defined $uri
+		|| !defined $thesaurus
+		|| !defined $language
+	);
+
+	my $db = $session->database;
 	my $res = undef; # Stores the query result after disconnect
-
-	if(defined $uri and defined $thesaurus and defined $language)
+	
+	my $cmd = $db->prepare_select( 'SELECT * FROM eprint_agro_cache WHERE uri=? AND thesaurus=? AND language=?' );
+	$cmd->execute($uri, $thesaurus, $language);
+	my $row = $cmd->fetchrow_hashref;
+	if(defined $row)
 	{
-		my $db = $session->database;
-		my $cmd = $db->prepare_select( "SELECT * FROM eprint_agro_cache WHERE uri='".$uri."' and thesaurus='".$thesaurus."' and language='".$language."'" );
-		$cmd->execute;
-		my $array_ref = $cmd->fetchrow_arrayref;
-		if(defined $array_ref)
+		my $date_created = $row->{date_created};
+		my $cacheValidity = $session->config( "agro_cache_validity" );
+
+		#test for cache timeout
+		if($date_created + $cacheValidity > time())
 		{
-			my $date_created = $array_ref->[4];
-
-		        my $cacheValidity = $session->config( "agro_cache_validity" );
-
-			if($date_created + $cacheValidity > time())
-			{
-				$res = $array_ref->[3];
-			}
+			$res = $row->{text_value};
 		}
-	}	
+	}
 
 	return $res;
 }

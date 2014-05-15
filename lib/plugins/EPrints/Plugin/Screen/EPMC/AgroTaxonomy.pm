@@ -24,10 +24,9 @@ sub action_enable
 
 	$self->SUPER::action_enable( $skip_reload );
 
-	my $repo = $self->{repository};
+	my $db = $self->{repository}->database;
 
-	my $db = EPrints::Database->new( $repo );
-	$ok = $db->connect;
+	$db->do('DROP TABLE IF EXISTS eprint_agro_cache');
 	$db->create_table( "eprint_agro_cache", ["uri", "thesaurus", "language"], ["uri VARCHAR(50)", "thesaurus VARCHAR(50)", "language VARCHAR(10)", "text_value VARCHAR(50)", "date_created BIGINT(20)"] );
 	$db->disconnect;
 
@@ -41,12 +40,9 @@ sub action_disable
 	my( $self, $skip_reload ) = @_;
 
 	$self->SUPER::action_disable( $skip_reload );
-	my $repo = $self->{repository};
+	my $db = $self->{repository}->database;
 
-	my $db = EPrints::Database->new( $repo );
-	$ok = $db->connect;
 	$db->drop_table( "eprint_agro_cache" );
-	$db->disconnect;
 
 	EPrints::XML::remove_package_from_xml( $self->_workflow_file, $self->{package_name} );
 
