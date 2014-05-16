@@ -27,8 +27,18 @@ sub action_enable
 	my $db = $self->{repository}->database;
 
 	$db->do('DROP TABLE IF EXISTS eprint_agro_cache');
-	$db->create_table( "eprint_agro_cache", ["uri", "thesaurus", "language"], ["uri VARCHAR(50)", "thesaurus VARCHAR(50)", "language VARCHAR(10)", "text_value VARCHAR(50)", "date_created BIGINT(20)"] );
-	$db->disconnect;
+	$db->do('
+		CREATE TABLE eprint_agro_cache (
+			uri VARCHAR(50),
+			thesaurus VARCHAR(50),
+			language VARCHAR(10),
+			text_value VARCHAR(50),
+			date_created BIGINT(20),
+			PRIMARY KEY (uri, thesaurus, language)
+		)
+	');
+
+#	$db->create_table( "eprint_agro_cache", ["uri", "thesaurus", "language"], ["uri VARCHAR(50)", "thesaurus VARCHAR(50)", "language VARCHAR(10)", "text_value VARCHAR(50)", "date_created BIGINT(20)"] );
 
 	EPrints::XML::add_to_xml( $self->_workflow_file, $self->_xml, $self->{package_name} );	
 

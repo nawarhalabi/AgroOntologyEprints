@@ -107,11 +107,11 @@ $c->{render_ontology_multiple_output} = sub
 		
                 my $term = $session->make_element( "p", class=>"agricultural-term" );
 	
-		if(@temp[0] =~ /[\/\\:]([^\/\\:]*)$/) # extract the last bit of the uri as the ontology plugin requires it for searching for the term in a specific language
+		if($temp[0] =~ /[\/\\:]([^\/\\:]*)$/) # extract the last bit of the uri as the ontology plugin requires it for searching for the term in a specific language
 		{
 			$termUri = "$1";
 
-			my $cachedTerm = checkAgroCache( $session, $termUri, @temp[1], $session->get_langid() );
+			my $cachedTerm = checkAgroCache( $session, $termUri, $temp[1], $session->get_langid() );
 			
 			if(defined $cachedTerm) # If conecept is in cache
 			{
@@ -119,7 +119,7 @@ $c->{render_ontology_multiple_output} = sub
 			}
 			else
 			{
-				my $request = HTTP::Request->new( "GET", $uri.@temp[1]."/concept?uri=".$termUri ); #
+				my $request = HTTP::Request->new( "GET", $uri.$temp[1]."/concept?uri=".$termUri ); #
 		        	$request->header( 'Accept-Language' => $session->get_langid() );		   # HTTP request to the broker
 				my $response = $ua->request( $request );					   #
 			
@@ -133,7 +133,7 @@ $c->{render_ontology_multiple_output} = sub
 				if(defined $domTemp) # If parsing is successful, look for the term text
 				{
 					my @tempElemList = $domTemp->getElementsByTagName( "skos:prefLabel" );	#
-					my $tempElem = @tempElemList[0] if @tempElemList;			#
+					my $tempElem = $tempElemList[0] if @tempElemList;			#
 					if( defined $tempElem )							# IMPORTANT: We have not used XPath here even though it is more appropriate because the XPath library
 					{									# in EPrints has problems dealing with XML namespaces. XPath would make this package more robust
 						foreach( $tempElem->getChildNodes )				#
@@ -148,7 +148,7 @@ $c->{render_ontology_multiple_output} = sub
 				{
 					$term->appendChild( $session->make_text( "Could not parse xml from the broker. Please check the broker or the connection with the broker. ".$@."\nresponse-xml from broker:".$response->content ) );
 				}
-				saveToAgroCache( $session, $termUri, @temp[1], $session->get_langid(), $termFromXML );
+				saveToAgroCache( $session, $termUri, $temp[1], $session->get_langid(), $termFromXML ); # Save concept to cache
 			}
 			$parentElem->appendChild( $term );
 		}
@@ -163,9 +163,13 @@ $c->{render_ontology_input} = sub
 	my $domElem = $session->make_element( "table", border=>"0", cellpadding=>"0", cellspacing=>"0", class=>"ep_form_input_grid" );  # Field container
 	my $tbody = $session->make_element( "tbody" );											#
 	
+	my $brokerInterfaceUri = $session->config( "broker_interface_uri" );
+
 	my $basenameInputHidden = $session->make_element( "input", type=>"hidden",class=>"basename", value=>$basename, name=>$basename."_hidden" ); # Used in JavaScript to determine the name of the field
+	my $brokerInterfaceUriInputHidden = $session->make_element( "input", type=>"hidden",class=>"broker-interface-uri", value=>$brokerInterfaceUri, name=>$brokerInterfaceUri."_hidden" ); # Used in JavaScript to determine the name of the field
 
 	$domElem->appendChild( $basenameInputHidden );
+	$domElem->appendChild( $brokerInterfaceUriInputHidden );
 	$domElem->appendChild( $tbody );
 
 	my $trHeader = $session->make_element( "tr" ); # Header row
