@@ -15,23 +15,23 @@
         <file>
           <filename>epm/agro_ontology/cfg/cfg.d/zz_agro_ontology_cfg.pl</filename>
           <mime_type>text/plain</mime_type>
-          <hash>1d180291fac55d2461432349a201f5f1</hash>
+          <hash>58ce2623d208a0bf4b2cecf6c01c8e84</hash>
           <hash_type>MD5</hash_type>
-          <filesize>599</filesize>
+          <filesize>550</filesize>
         </file>
         <file>
           <filename>epm/agro_ontology/cfg/cfg.d/zz_agro_ontology_lib.pl</filename>
           <mime_type>text/plain</mime_type>
-          <hash>2787097176abe6d770492946b33b40f3</hash>
+          <hash>3f9bdd1d904ae7c8f1f9977414e07642</hash>
           <hash_type>MD5</hash_type>
-          <filesize>9635</filesize>
+          <filesize>9438</filesize>
         </file>
         <file>
           <filename>epm/agro_ontology/cfg/cfg.d/zz_rdf_triples_agro.pl</filename>
           <mime_type>text/plain</mime_type>
-          <hash>55e990174e55084db9175f2e6e969458</hash>
+          <hash>91453cbb5faaef04e2bc133a840ada50</hash>
           <hash_type>MD5</hash_type>
-          <filesize>711</filesize>
+          <filesize>752</filesize>
         </file>
         <file>
           <filename>lang/en/phrases/agro.xml</filename>
@@ -50,9 +50,9 @@
         <file>
           <filename>static/javascript/ontology_overlay.js</filename>
           <mime_type>inode/symlink</mime_type>
-          <hash>5371d2f1cd3b6d1017c7500ea7642ca1</hash>
+          <hash>ce6c7db3b005752b7bf37cafe3776eb5</hash>
           <hash_type>MD5</hash_type>
-          <filesize>6349</filesize>
+          <filesize>6445</filesize>
         </file>
       </files>
       <mime_type>inode/symlink</mime_type>
@@ -61,7 +61,7 @@
       <content>install</content>
     </document>
   </documents>
-  <version>0.1.2</version>
+  <version>0.1.4</version>
   <controller>EPMC::AgroTaxonomy</controller>
   <creators>
     <item>

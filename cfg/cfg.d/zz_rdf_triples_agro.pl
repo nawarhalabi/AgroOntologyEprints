@@ -8,7 +8,9 @@ $c->add_dataset_trigger( "eprint", EP_TRIGGER_RDF, sub {
 
 	foreach my $agro_subject ( @{$eprint->get_value( "agro_subjects" )} )
 	{
-		my $agro_uri = "<".$agro_subject->{authority}.">";
+		my @temp = split( /\|\|/, $agro_subject->{authority} );
+
+		my $agro_uri = "<".$temp[0].">";
 		$o{graph}->add( 
 			  subject => $agro_uri,
 			predicate => "rdf:type",

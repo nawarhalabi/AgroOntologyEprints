@@ -107,51 +107,49 @@ $c->{render_ontology_multiple_output} = sub
 		
                 my $term = $session->make_element( "p", class=>"agricultural-term" );
 	
-		if($temp[0] =~ /[\/\\:]([^\/\\:]*)$/) # extract the last bit of the uri as the ontology plugin requires it for searching for the term in a specific language
+		$termUri = $temp[0];
+
+		my $cachedTerm = checkAgroCache( $session, $termUri, $temp[1], $session->get_langid() );
+			
+		if(defined $cachedTerm) # If conecept is in cache
 		{
-			$termUri = "$1";
-
-			my $cachedTerm = checkAgroCache( $session, $termUri, $temp[1], $session->get_langid() );
-			
-			if(defined $cachedTerm) # If conecept is in cache
-			{
-				$term->appendChild( $session->make_text( $cachedTerm ) );
-			}
-			else
-			{
-				my $request = HTTP::Request->new( "GET", $uri.$temp[1]."/concept?uri=".$termUri ); #
-		        	$request->header( 'Accept-Language' => $session->get_langid() );		   # HTTP request to the broker
-				my $response = $ua->request( $request );					   #
-			
-				my $domTemp = undef;								   #
-				my $parser1 = new XML::DOM::Parser;						   # Parse XML response
-				eval { $domTemp = $parser1->parse( $response->content ); }; warn $@ if $@;	   #
-
-				my $termFromXML = ""; # The term text value as retreived from the broker
-
-				my $done = 0; #indicates weather a value has been found in hte xml response from the broker
-				if(defined $domTemp) # If parsing is successful, look for the term text
-				{
-					my @tempElemList = $domTemp->getElementsByTagName( "skos:prefLabel" );	#
-					my $tempElem = $tempElemList[0] if @tempElemList;			#
-					if( defined $tempElem )							# IMPORTANT: We have not used XPath here even though it is more appropriate because the XPath library
-					{									# in EPrints has problems dealing with XML namespaces. XPath would make this package more robust
-						foreach( $tempElem->getChildNodes )				#
-						{								#
-                                			$term->appendChild( $session->make_text( $_->getNodeValue ) );
-							$termFromXML .= $_->getNodeValue;
-						}
-						$done = 1;
-					}
-				}
-				if(not defined $domTemp or not $done) # Display error in case it occures showing the XML response from the broker and the error message from parser
-				{
-					$term->appendChild( $session->make_text( "Could not parse xml from the broker. Please check the broker or the connection with the broker. ".$@."\nresponse-xml from broker:".$response->content ) );
-				}
-				saveToAgroCache( $session, $termUri, $temp[1], $session->get_langid(), $termFromXML ); # Save concept to cache
-			}
-			$parentElem->appendChild( $term );
+			$term->appendChild( $session->make_text( $cachedTerm ) );
 		}
+		else
+		{
+			my $request = HTTP::Request->new( "GET", $uri.$temp[1]."/concept?uri=".$termUri ); #
+		 
+		       	$request->header( 'Accept-Language' => $session->get_langid() );		   # HTTP request to the broker
+			my $response = $ua->request( $request );					   #
+		
+			my $domTemp = undef;								   #
+			my $parser1 = new XML::DOM::Parser;						   # Parse XML response
+			eval { $domTemp = $parser1->parse( $response->content ); }; warn $@ if $@;	   #
+
+			my $termFromXML = ""; # The term text value as retreived from the broker
+
+			my $done = 0; #indicates weather a value has been found in hte xml response from the broker
+			if(defined $domTemp) # If parsing is successful, look for the term text
+			{
+				my @tempElemList = $domTemp->getElementsByTagName( "skos:prefLabel" );	#
+				my $tempElem = $tempElemList[0] if @tempElemList;			#
+				if( defined $tempElem )							# IMPORTANT: We have not used XPath here even though it is more appropriate because the XPath library
+				{									# in EPrints has problems dealing with XML namespaces. XPath would make this package more robust
+					foreach( $tempElem->getChildNodes )				#
+					{								#
+                               			$term->appendChild( $session->make_text( $_->getNodeValue ) );
+						$termFromXML .= $_->getNodeValue;
+					}
+					$done = 1;
+				}
+			}
+			if(not defined $domTemp or not $done) # Display error in case it occures showing the XML response from the broker and the error message from parser
+			{
+				$term->appendChild( $session->make_text( "Could not parse xml from the broker. Please check the broker or the connection with the broker. ".$@."\nresponse-xml from broker:".$response->content ) );
+			}
+			saveToAgroCache( $session, $termUri, $temp[1], $session->get_langid(), $termFromXML ); # Save concept to cache
+		}
+		$parentElem->appendChild( $term );
 	}
 	return $parentElem;
 };
