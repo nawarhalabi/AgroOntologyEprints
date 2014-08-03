@@ -13,6 +13,13 @@
           <filesize>1263</filesize>
         </file>
         <file>
+          <filename>citations/eprint/issue.xml</filename>
+          <mime_type>application/xml</mime_type>
+          <hash>02e734868277016e2b4b9d88419e4982</hash>
+          <hash_type>MD5</hash_type>
+          <filesize>516</filesize>
+        </file>
+        <file>
           <filename>epm/agro_ontology/cfg/cfg.d/zz_agro_ontology_cfg.pl</filename>
           <mime_type>text/plain</mime_type>
           <hash>58ce2623d208a0bf4b2cecf6c01c8e84</hash>
@@ -48,29 +55,72 @@
           <filesize>1866</filesize>
         </file>
         <file>
+          <filename>static/images/epm/agro_ontology.png</filename>
+          <mime_type>image/png</mime_type>
+          <hash>f6f48dfbf00e845be9c31b978b616d92</hash>
+          <hash_type>MD5</hash_type>
+          <filesize>148144</filesize>
+        </file>
+        <file>
+          <filename>static/images/overlay.png</filename>
+          <mime_type>image/png</mime_type>
+          <hash>1ffd3f2f0544f86b78c9b44548dbb3d5</hash>
+          <hash_type>MD5</hash_type>
+          <filesize>109</filesize>
+        </file>
+        <file>
           <filename>static/javascript/ontology_overlay.js</filename>
           <mime_type>inode/symlink</mime_type>
           <hash>ce6c7db3b005752b7bf37cafe3776eb5</hash>
           <hash_type>MD5</hash_type>
           <filesize>6445</filesize>
         </file>
+        <file>
+          <filename>static/style/auto/agro_ontology.css</filename>
+          <mime_type>text/plain</mime_type>
+          <hash>fb847090d2decb742886415505cf7166</hash>
+          <hash_type>MD5</hash_type>
+          <filesize>998</filesize>
+        </file>
       </files>
-      <mime_type>inode/symlink</mime_type>
-      <format>other</format>
-      <main>static/javascript/ontology_overlay.js</main>
+      <mime_type>text/plain</mime_type>
+      <format>text</format>
+      <main>static/style/auto/agro_ontology.css</main>
       <content>install</content>
     </document>
+    <document>
+      <files>
+        <file>
+          <filename>static/images/epm/agro_ontology.png</filename>
+          <mime_type>image/png</mime_type>
+          <hash>f6f48dfbf00e845be9c31b978b616d92</hash>
+          <hash_type>MD5</hash_type>
+          <filesize>148144</filesize>
+        </file>
+      </files>
+      <format>image</format>
+      <main>static/images/epm/agro_ontology.png</main>
+      <content>coverimage</content>
+    </document>
   </documents>
-  <version>0.1.4</version>
+  <version>1.0.3</version>
   <controller>EPMC::AgroTaxonomy</controller>
   <creators>
     <item>
       <name>
         <family>Halabi</family>
-        <given>N</given>
+        <given>Nawar</given>
       </name>
     </item>
   </creators>
   <title>Agro Ontology</title>
+  <description>The Agro Ontology plugin was developed by Nawar Halabi at the University of Southampton, with the assistance of Adam Field, Sebastien Francois, Tim Miles-Board, and other members of EPrints Services, in association with Imma Subirats Coll of the Food and Agriculture Organisation (FAO) of the United Nations, and Marc Goovaerts and Dirk Leinders from Hasselt University, Belgium. A paper describing this work was presented at Open Repositories 2014.
+
+The FAO is working actively with linked data to bring together those working with agricultural data via the use of a number of semantic taxonomies. In the EPrints world these linked data taxonomies replace the subject tree. The tool is specifically built for this community.
+
+When installed, the plugin will (1) replace the subject stage with the ontology, (2) record the URIs selected with the tool in the subject tree, (3) resolve the labels for the URIs in the language of the repository for displaying on the abstract page, and (4) expose the URIs via the repository linked data.
+
+By default, this package uses the ontology plugin (broker) hosted by Hasselt University, Belgium. In case you are hosting your own ontology plugin or want to use a different ontology plugin, please edit the zz_agro_ontology_cfg.pl file in the cfg/cfg.d/ sub-directory inside your repository&apos;s directory. Both the &quot;agro_ontology_broker_uri&quot; and &quot;broker_interface_uri&quot; configuration variables need to change to point to the broker&apos;s search URI (to which search requests are sent) and the broker&apos;s interface URI (which provides the web interface for the search) accordingly.</description>
+  <requirements>This has been built and tested on EPrints 3.3.12. This is the recommended minimum platform. It relies on the RDF export utility to generate an RDF representation of the documents which contain the agricultural terms.</requirements>
   <icon>images/epm/agro_ontology.png</icon>
 </epm>
