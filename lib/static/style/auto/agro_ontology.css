@@ -1,0 +1,52 @@
+
+/* 
+ * This CSS file will be applied after all the built in styles.
+ * 
+ * CSS files are loaded in alphabetic order, hence the  "zzz" in 
+ * the filename to force it to load after the other css files!
+ * 
+ * Add any local over-rides here. 
+ * 
+ * To totally replace a system css file, create a file of the same 
+ * name in this directory. eg. messages.css
+ * 
+*/
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#ontology-overlay {
+    width: 100%;
+    min-height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    background: url('../images/overlay.png') repeat 0 0;
+    display: none;
+    text-align: center;
+}
+
+#overlay-panel {
+    margin: 5% auto 0 auto;
+    height: 650px;
+    width: 1150px;
+    background: #FFF;
+    max-width:100%;
+}
+
+/** ie6 and below only **/
+* html #overlay {
+    background-image: url('../images/overlay-ie6.png');
+    height: 100%;
+    position: absolute;
+}
+
+.white-background
+{
+    background-color:white;
+}
